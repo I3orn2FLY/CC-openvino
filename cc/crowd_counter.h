@@ -9,13 +9,13 @@
 #include <string>
 
 
-typedef std::vector<Detection> Detections;
+
 
 class CrowdCounter {
 public:
     explicit CrowdCounter(const std::string &model_name);
 
-    void Predict(const cv::Mat &input);
+    void Predict(const cv::Mat &img);
 
 
 protected:
