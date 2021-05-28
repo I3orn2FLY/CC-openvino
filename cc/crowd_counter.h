@@ -17,6 +17,8 @@ public:
 
     void Predict(const cv::Mat &img);
 
+private:
+    float inp_h, inp_w, out_h, out_w;
 
 protected:
     INetwork::Ptr net;

@@ -110,7 +110,7 @@ IENetwork::SetInput(const cv::Mat &pInput, size_t pInputIndex, float lower, floa
     // locked memory holder should be alive all time while access to its buffer happens
     auto mblobHolder = mblob->wmap();
 
-    auto *blob_data = mblobHolder.as<uint8_t *>();
+    auto *blob_data = mblobHolder.as<float *>();
 
     cv::Mat resized_image;
     if (static_cast<int>(width) != pInput.size().width ||
@@ -124,8 +124,7 @@ IENetwork::SetInput(const cv::Mat &pInput, size_t pInputIndex, float lower, floa
     for (size_t c = 0; c < channels; c++) {
         for (size_t h = 0; h < height; h++) {
             for (size_t w = 0; w < width; w++) {
-                blob_data[batchOffset + c * width * height + h * width + w] = (uint8_t) resized_image.at<cv::Vec3b>(h,
-                                                                                                                    w)[c];
+                blob_data[batchOffset + c * width * height + h * width + w] = resized_image.at<cv::Vec3f>(h,w)[c];
             }
         }
     }

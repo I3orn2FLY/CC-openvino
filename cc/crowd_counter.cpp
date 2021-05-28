@@ -4,42 +4,54 @@
 #include "crowd_counter.h"
 
 CrowdCounter::CrowdCounter(const std::string &model_name) {
+
     net = std::make_shared<IENetwork>("../data/models/" + model_name + ".xml", "../data/models/" + model_name + ".bin");
     net->Build(netOptions);
+
+    auto inp_shape = net->GetInputShape();
+    auto out_shape = net->GetOutputShape();
+    inp_h = static_cast<float>(inp_shape[2]);
+    inp_w = static_cast<float>(inp_shape[3]);
+
+    out_h = static_cast<float>(out_shape[1]);
+    out_w = static_cast<float>(out_shape[2]);
 }
 
 void CrowdCounter::Predict(const cv::Mat &img) {
-    auto inp_shape = net->GetInputShape();
-    size_t inp_h = inp_shape[2];
-    size_t inp_w = inp_shape[3];
-    int new_height, new_width;
-    if (img.rows > img.cols) {
-        new_height = inp_h;
-        new_width = int(img.cols * (inp_w * 1.f / img.rows));
+
+    auto img_h = static_cast<float>(img.rows);
+    auto img_w = static_cast<float>(img.cols);
+    float scaled_h, scaled_w;
+
+    if (img_w / img_h > inp_w / inp_h) {
+        scaled_w = inp_w;
+        scaled_h = inp_w * img_h / img_w;
     } else {
-        new_width = inp_w;
-        new_height = int(img.rows * (inp_h * 1.f / img.cols));
+        scaled_h = inp_h;
+        scaled_w = inp_h * img_w / img_h;
     }
-    cv::Mat scaled;
-    cv::resize(img, scaled, {new_width, new_height});
+
+    cv::Mat scaled, padded = cv::Mat(static_cast<int>(inp_h), static_cast<int>(inp_w), CV_8UC3);
+    cv::resize(img, scaled, {static_cast<int>(scaled_w), static_cast<int>(scaled_h)});
     cv::cvtColor(scaled, scaled, cv::COLOR_RGB2BGR);
-    cv::Mat padded(inp_h, inp_w, CV_8UC3);
+
     padded = 0;
-    scaled.copyTo(padded(cv::Rect(0, 0, new_width, new_height)));
+    scaled.copyTo(padded(cv::Rect(0, 0, static_cast<int>(scaled_w), static_cast<int>(scaled_h))));
 
     net->SetInput(padded);
     net->Predict();
-    auto shape = net->GetOutputShape(0);
+
+    auto truncated_h = std::min(out_h, ceil(scaled_h / inp_h * out_h));
+    auto truncated_w = std::min(out_w, ceil(scaled_w / inp_w * out_w));
+
     float cc = 0.f;
-    size_t n = 1;
-    for (const auto &s: shape) {
-        n *= s;
-    }
     auto res = net->GetOutput();
-    for (size_t i = 0; i < n; ++i) {
-        cc += res[i];
+    for (float i = 0; i < truncated_h;  ++i) {
+        for (float j = 0; j < truncated_w; ++j) {
+            cc += res[int(i * out_w + j)];
+        }
     }
 
+    std::cout << cc << std::endl;
 
-    std::cout << "cc: " << cc << std::endl;
 }

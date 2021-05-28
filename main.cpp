@@ -6,8 +6,13 @@
 #include <chrono>
 
 int main() {
-    auto detector = CrowdCounter("TargetAINet");
-    cv::Mat frame = cv::imread("../data/images/old_trafford.jpg");
+//    auto detector = CrowdCounter("TargetAINet150");
+    auto detector = CrowdCounter("detr-1152x1536");
+//    auto detector = CrowdCounter("model");
+//    cv::Mat frame = cv::imread("../data/images/old_trafford.jpg");
+//    cv::Mat frame = cv::imread("../data/images/asd.png");
+//    cv::Mat frame = cv::imread("../data/images/unnamed2.png");
+    cv::Mat frame = cv::imread("../data/images/unnamed.png");
 //    cv::Mat frame = cv::imread("../data/images/asd.jpg");
     auto bf = std::chrono::high_resolution_clock::now();
     float frame_n = 0;
